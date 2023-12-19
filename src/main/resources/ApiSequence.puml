@@ -1,0 +1,36 @@
+@startuml
+actor Users
+participant UserController
+database MongoDB
+
+Users -> UserController: GET /users
+UserController -> UserServiceImpl: getUsers()
+UserServiceImpl -> MongoTemplate: find(query, Users.class)
+MongoTemplate --> UserServiceImpl: List<Users>
+UserServiceImpl --> UserController: GenericResult<Page<Users>>
+UserController --> Users: ResponseEntity<GenericResult<Page<Users>>>
+
+
+Users -> UserController: POST /users
+UserController -> UserServiceImpl: createUsers(List<Users> newUsers)
+UserServiceImpl -> SequenceGeneratorService: getSeqNumber("user_sequence")
+SequenceGeneratorService --> UserServiceImpl: int id
+UserServiceImpl -> MongoTemplate: save(users)
+UserController --> Users: ResponseEntity<GenericResult<?>>
+
+
+Users -> UserController: PUT /users
+UserController -> UserServiceImpl: updateUser(List<Users> updates)
+UserServiceImpl -> MongoTemplate: exists(query, Users.class)
+UserServiceImpl -> MongoTemplate: updateFirst(query, updateQuery, Users.class)
+UserController --> Users: ResponseEntity<GenericResult<String>>
+UserController --> Users: ResponseEntity<GenericResult<String>> (User not found)
+
+
+Users -> UserController: DELETE /users
+UserController -> UserServiceImpl: deleteUser(List<Integer> delIds)
+UserServiceImpl -> MongoTemplate: exists(query, Users.class)
+UserServiceImpl -> MongoTemplate: remove(query, Users.class)
+UserController --> Users: ResponseEntity<GenericResult<String>>
+UserController --> Users: ResponseEntity<GenericResult<String>> (User not found)
+@enduml
